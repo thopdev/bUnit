@@ -9,9 +9,19 @@ namespace Bunit
 {
 	public partial class TestServiceProviderTest
 	{
-		class DummyService { }
-		class AnotherDummyService { }
-		class OneMoreDummyService { }
+		private class DummyService { }
+    
+		private class AnotherDummyService { }
+    
+		private class OneMoreDummyService { }
+    
+		private class FallbackServiceProvider : IServiceProvider
+		{
+			public object GetService(Type serviceType)
+			{
+				return new DummyService();
+			}
+		}
 
 		[Fact(DisplayName = "Provider initialized without a service collection has zero services by default")]
 		public void Test001()
@@ -119,6 +129,25 @@ namespace Bunit
 			var actual = sut.GetService<DummyService>();
 
 			actual.ShouldBe(expected);
+		}
+
+		[Fact(DisplayName = "No registered service returns null")]
+		public void Test021()
+		{
+			using var sut = new TestServiceProvider();
+			var result = sut.GetService<DummyService>();
+
+			Assert.Null(result);
+		}
+
+		[Fact(DisplayName= "Registered fallback service provider returns value")]
+		public void Test022()
+		{
+			using var sut = new TestServiceProvider();
+			sut.AddFallbackServiceProvider(new FallbackServiceProvider());
+			var result = sut.GetService<DummyService>();
+
+			Assert.NotNull(result);
 		}
 	}
 }
